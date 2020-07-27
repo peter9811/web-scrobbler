@@ -15,6 +15,7 @@ const {
 
 	assertBrowserIsSupported,
 	assertBuildModeIsValid,
+	configureTsCompilerForTests,
 	getExtensionId,
 } = require('./shared.config.js');
 
@@ -26,27 +27,13 @@ const manifestPath = `${srcDir}/${manifestFile}`;
 const FILES_TO_BUMP = [manifestPath, 'package.json', 'package-lock.json'];
 
 // Files to lint
-const JS_FILES = [
-	'*.js',
-	// Custom Grunt tasks
-	'.grunt',
-	// Connectors
-	`${srcDir}/connectors/**/*.js`,
-	// Core files
-	`${srcDir}/core/**/*.js`,
-	`${srcDir}/ui/**/*.js`,
-	// Shell Scripts
-	'scripts/*.js',
-	// Tests
-	'tests/**/*.js',
-];
+const JS_FILES = ['*.js', '.grunt', `${srcDir}/**/*.js`, 'tests/**/*.js'];
+const TS_FILES = [`${srcDir}/**/*.ts`, 'tests/**/*.ts'];
 const JSON_FILES = [`${srcDir}/**/*.json`, '*.json'];
 const HTML_FILES = [`${srcDir}/ui/**/*.html`];
 const CSS_FILES = [`${srcDir}/ui/**/*.css`];
 const VUE_FILES = [`${srcDir}/ui/**/*.vue`];
-const DOC_FILES = [
-	'*.md', '.github/**/*.md',
-];
+const DOC_FILES = ['*.md', '.github/**/*.md'];
 
 const isCi = process.env.CI === 'true';
 
@@ -133,7 +120,7 @@ module.exports = (grunt) => {
 		 */
 
 		eslint: {
-			target: [JS_FILES, VUE_FILES],
+			target: [JS_FILES, TS_FILES, VUE_FILES],
 			options: {
 				fix: !isCi,
 			},
@@ -145,7 +132,14 @@ module.exports = (grunt) => {
 			src: JSON_FILES,
 		},
 		lintspaces: {
-			src: [JS_FILES, JSON_FILES, CSS_FILES, HTML_FILES, VUE_FILES],
+			src: [
+				JS_FILES,
+				TS_FILES,
+				JSON_FILES,
+				CSS_FILES,
+				HTML_FILES,
+				VUE_FILES,
+			],
 			options: {
 				editorconfig: '.editorconfig',
 				ignores: ['js-comments'],
@@ -168,10 +162,15 @@ module.exports = (grunt) => {
 
 		mochacli: {
 			options: {
-				require: ['esm', 'tests/set-alias.js', 'tests/set-stubs.js'],
+				require: [
+					'ts-node/register',
+					'tsconfig-paths/register',
+					'source-map-support/register',
+					'tests/helpers/set-stubs',
+				],
 				reporter: 'progress',
 			},
-			all: ['tests/background/*.js', 'tests/content/*.js'],
+			all: ['tests/**/*.spec.ts'],
 		},
 	});
 
@@ -292,7 +291,11 @@ module.exports = (grunt) => {
 	/**
 	 * Run tests.
 	 */
-	grunt.registerTask('test', ['mochacli']);
+	grunt.registerTask('test', () => {
+		configureTsCompilerForTests();
+
+		grunt.task.run('mochacli');
+	});
 
 	/**
 	 * Lint source code using linters specified below.
