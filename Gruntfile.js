@@ -19,21 +19,20 @@ const {
 	getExtensionId,
 } = require('./shared.config.js');
 
-const DIST_FILE_CHROME = 'web-scrobbler-chrome.zip';
-const DIST_FILE_FIREFOX = 'web-scrobbler-firefox.zip';
+const distFileChrome = 'web-scrobbler-chrome.zip';
+const distFileFirefox = 'web-scrobbler-firefox.zip';
 
 const manifestPath = `${srcDir}/${manifestFile}`;
 
-const FILES_TO_BUMP = [manifestPath, 'package.json', 'package-lock.json'];
+const filesToBump = [manifestPath, 'package.json', 'package-lock.json'];
 
-// Files to lint
-const JS_FILES = ['*.js', '.grunt', `${srcDir}/**/*.js`, 'tests/**/*.js'];
-const TS_FILES = [`${srcDir}/**/*.ts`, 'tests/**/*.ts'];
-const JSON_FILES = [`${srcDir}/**/*.json`, '*.json'];
-const HTML_FILES = [`${srcDir}/ui/**/*.html`];
-const CSS_FILES = [`${srcDir}/ui/**/*.css`];
-const VUE_FILES = [`${srcDir}/ui/**/*.vue`];
-const DOC_FILES = ['*.md', '.github/**/*.md'];
+const cssFilesToLint = [`${srcDir}/ui/**/*.css`];
+const docFilesToLint = ['*.md', '.github/**/*.md'];
+const htmlFilesToLint = [`${srcDir}/ui/**/*.html`];
+const jsFilesToLint = ['*.js', '.grunt', `${srcDir}/**/*.js`, 'tests/**/*.js'];
+const jsonFilesToLint = [`${srcDir}/**/*.json`, '*.json'];
+const tsFilesToLint = [`${srcDir}/**/*.ts`, 'tests/**/*.ts'];
+const vueFilesToLint = [`${srcDir}/ui/**/*.vue`];
 
 const isCi = process.env.CI === 'true';
 
@@ -47,12 +46,12 @@ module.exports = (grunt) => {
 
 		clean: {
 			build: buildDir,
-			dist: [DIST_FILE_CHROME, DIST_FILE_FIREFOX],
+			dist: [distFileChrome, distFileFirefox],
 		},
 		compress: {
 			chrome: {
 				options: {
-					archive: DIST_FILE_CHROME,
+					archive: distFileChrome,
 					pretty: true,
 				},
 				expand: true,
@@ -61,7 +60,7 @@ module.exports = (grunt) => {
 			},
 			firefox: {
 				options: {
-					archive: DIST_FILE_FIREFOX,
+					archive: distFileFirefox,
 					pretty: true,
 				},
 				expand: true,
@@ -83,13 +82,13 @@ module.exports = (grunt) => {
 			secret: process.env.AMO_SECRET,
 			id: getExtensionId(browserFirefox),
 			version: '<%= manifest.version %>',
-			src: DIST_FILE_FIREFOX,
+			src: distFileFirefox,
 		},
 		bump: {
 			options: {
-				files: FILES_TO_BUMP,
+				files: filesToBump,
 				updateConfigs: ['manifest'],
-				commitFiles: FILES_TO_BUMP,
+				commitFiles: filesToBump,
 			},
 		},
 		publish_github_drafts: {
@@ -110,7 +109,7 @@ module.exports = (grunt) => {
 			extensions: {
 				'web-scrobbler': {
 					appID: getExtensionId(browserChrome),
-					zip: DIST_FILE_CHROME,
+					zip: distFileChrome,
 				},
 			},
 		},
@@ -120,25 +119,25 @@ module.exports = (grunt) => {
 		 */
 
 		eslint: {
-			target: [JS_FILES, TS_FILES, VUE_FILES],
+			target: [jsFilesToLint, tsFilesToLint, vueFilesToLint],
 			options: {
 				fix: !isCi,
 			},
 		},
 		htmlvalidate: {
-			src: [HTML_FILES, VUE_FILES],
+			src: [htmlFilesToLint, vueFilesToLint],
 		},
 		jsonlint: {
-			src: JSON_FILES,
+			src: jsonFilesToLint,
 		},
 		lintspaces: {
 			src: [
-				JS_FILES,
-				TS_FILES,
-				JSON_FILES,
-				CSS_FILES,
-				HTML_FILES,
-				VUE_FILES,
+				jsFilesToLint,
+				tsFilesToLint,
+				jsonFilesToLint,
+				cssFilesToLint,
+				htmlFilesToLint,
+				vueFilesToLint,
 			],
 			options: {
 				editorconfig: '.editorconfig',
@@ -150,10 +149,10 @@ module.exports = (grunt) => {
 				quiet: true,
 				frail: true,
 			},
-			src: DOC_FILES,
+			src: docFilesToLint,
 		},
 		stylelint: {
-			all: [CSS_FILES, VUE_FILES],
+			all: [cssFilesToLint, vueFilesToLint],
 		},
 
 		/**
@@ -195,6 +194,7 @@ module.exports = (grunt) => {
 	/**
 	 * Copy source filed to build directory, preprocess them and
 	 * set the extension icon according to specified browser.
+	 *
 	 * @param {String} browser Browser name
 	 * @param {String} [mode=modeDevelopment] Build mode
 	 */
@@ -209,6 +209,7 @@ module.exports = (grunt) => {
 
 	/**
 	 * Build the extension and pack source files in a zipball.
+	 *
 	 * @param {String} browser Browser name
 	 * @param {String} [mode=modeDevelopment] Build mode
 	 */
@@ -224,8 +225,9 @@ module.exports = (grunt) => {
 	});
 
 	/**
-	 * Publish data.
-	 * @param  {String} browser Browser name
+	 * Publish the extension to the store.
+	 *
+	 * @param {String} browser Browser name
 	 */
 	grunt.registerTask('publish', (browser) => {
 		gruntAssertBrowserIsSupported(browser);
@@ -275,7 +277,7 @@ module.exports = (grunt) => {
 	/**
 	 * Upload new version.
 	 *
-	 * @param  {String} browser Browser name
+	 * @param {String} browser Browser name
 	 */
 	grunt.registerTask('upload', (browser) => {
 		switch (browser) {
@@ -312,7 +314,8 @@ module.exports = (grunt) => {
 
 	/**
 	 * Throw an error if the extension doesn't support given browser.
-	 * @param  {String}  browser Browser name
+	 *
+	 * @param {String}  browser Browser name
 	 */
 	function gruntAssertBrowserIsSupported(browser) {
 		try {
@@ -324,7 +327,7 @@ module.exports = (grunt) => {
 
 	/**
 	 * Throw an error if the extension doesn't support given browser.
-	 * @param  {String}  mode Mode
+	 * @param {String}  mode Mode
 	 */
 	function gruntAssertBuildModeIsValid(mode) {
 		try {
