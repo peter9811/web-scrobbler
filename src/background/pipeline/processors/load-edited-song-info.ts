@@ -1,9 +1,7 @@
-import SavedEdits from '@/background/storage/saved-edits';
-
-import Song from '@/background/object/song';
-import { SongDiff } from '@/background/pipeline/pipeline';
 import { ProcessedSongInfo } from '@/background/object/song';
-
+import { SavedEdits } from '@/background/storage/saved-edits';
+import { Song } from '@/background/object/song';
+import { SongDiff } from '@/background/pipeline/pipeline';
 /**
  * Load edited song info from the storage.
  *

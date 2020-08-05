@@ -1,4 +1,4 @@
-import Song from '@/background/object/song';
+import { Song } from '@/background/object/song';
 
 import { SongDiff } from '@/background/pipeline/pipeline';
 
@@ -27,9 +27,7 @@ const endpoints: Record<Endpoint, EndPointKey> = {
  *
  * @return Cover art from CoverArtArchive.
  */
-export async function fetchCoverArt(
-	song: Song
-): Promise<SongDiff> {
+export async function fetchCoverArt(song: Song): Promise<SongDiff> {
 	if (song.parsed.trackArt) {
 		console.log('Using local/parsed artwork');
 		return {};

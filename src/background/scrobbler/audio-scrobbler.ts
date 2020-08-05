@@ -3,8 +3,9 @@
 
 import MD5 from 'blueimp-md5';
 
-import ApiCallResult from '@/background/scrobbler/api-call-result';
-import BaseScrobbler, {
+import { ApiCallResult } from '@/background/scrobbler/api-call-result';
+import {
+	BaseScrobbler,
 	ScrobblerStorage,
 	Session,
 } from '@/background/scrobbler/base-scrobbler';
@@ -57,7 +58,7 @@ export interface AudioScrobblerStorage extends ScrobblerStorage {
 	token?: string;
 }
 
-export default abstract class AudioScrobbler extends BaseScrobbler {
+export abstract class AudioScrobbler extends BaseScrobbler {
 	abstract getApiKey(): string;
 
 	abstract getApiSecret(): string;
