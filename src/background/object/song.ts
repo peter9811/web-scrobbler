@@ -30,7 +30,7 @@ export interface SongMetadata {
 	/**
 	 * Flag indicates song is loved by used on service.
 	 */
-	userloved: boolean | undefined;
+	userloved: LoveStatus;
 
 	/**
 	 * Time when song is started playing in UNIX timestamp format.
@@ -94,6 +94,12 @@ export interface SongInfo extends BaseSongInfo {
 export type EditedSongInfo = BaseSongInfo;
 
 export type BaseSongField = keyof BaseSongInfo;
+
+export enum LoveStatus {
+	Unknown,
+	Loved,
+	Unloved,
+}
 
 export class Song {
 	parsed: ParsedSongInfo;
@@ -291,22 +297,23 @@ export class Song {
 	 * the behavior of the function is to set `Love` to true, if all
 	 * services have the song with `Love` set to true.
 	 *
-	 * @param isLoved Flag means song is loved or not
+	 * @param loveStatus Flag means song is loved or not
 	 * @param [force=false] Force status assignment
 	 */
-	setLoveStatus(isLoved: boolean, { force = false } = {}): void {
+	setLoveStatus(loveStatus: LoveStatus, { force = false } = {}): void {
 		if (force) {
-			this.metadata.userloved = isLoved;
+			this.metadata.userloved = loveStatus;
 			return;
 		}
 
-		if (isLoved) {
-			if (this.metadata.userloved === undefined) {
-				this.metadata.userloved = true;
-			}
-		} else {
-			this.metadata.userloved = false;
+		if (
+			loveStatus === LoveStatus.Loved &&
+			this.metadata.userloved !== LoveStatus.Unknown
+		) {
+			return;
 		}
+
+		this.metadata.userloved = loveStatus;
 	}
 
 	/**
@@ -402,7 +409,7 @@ export class Song {
 
 	private initMetadata(): void {
 		this.metadata = {
-			userloved: undefined,
+			userloved: LoveStatus.Unknown,
 			startTimestamp: Math.floor(Date.now() / 1000),
 		};
 	}

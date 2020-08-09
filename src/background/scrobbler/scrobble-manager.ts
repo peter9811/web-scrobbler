@@ -7,7 +7,7 @@ import { LastFmScrobbler } from '@/background/scrobbler/lastfm-scrobbler';
 import { LibreFmScrobbler } from '@/background/scrobbler/librefm-scrobbler';
 import { ListenBrainzScrobbler } from '@/background/scrobbler/listenbrainz-scrobbler';
 
-import { SongInfo } from '@/background/object/song';
+import { SongInfo, LoveStatus } from '@/background/object/song';
 
 /**
  * Scrobblers that are bound, meaning they have valid session IDs.
@@ -167,23 +167,28 @@ export const ScrobbleManager = new (class {
 	 * Toggle song love status.
 	 *
 	 * @param songInfo Object containing song info
-	 * @param flag Flag indicates song is loved
+	 * @param loveStatus Flag indicates song is loved
 	 *
 	 * @return Promise that will be resolved then the task will complete
 	 */
-	toggleLove(songInfo, flag): Promise<ApiCallResult[]> {
+	toggleLove(
+		songInfo: SongInfo,
+		loveStatus: LoveStatus
+	): Promise<ApiCallResult[]> {
 		const scrobblers = registeredScrobblers.filter((scrobbler) => {
 			return scrobbler.canLoveSong();
 		});
-		const requestName = flag ? 'love' : 'unlove';
+		const requestName = loveStatus === LoveStatus.Loved ? 'love' : 'unlove';
 		console.log(`Send "${requestName}" request: ${scrobblers.length}`);
 
 		return Promise.all(
 			scrobblers.map((scrobbler) => {
 				// Forward result (including errors) to caller
-				return scrobbler.toggleLove(songInfo, flag).catch((result) => {
-					return this.processErrorResult(scrobbler, result);
-				});
+				return scrobbler
+					.toggleLove(songInfo, loveStatus)
+					.catch((result) => {
+						return this.processErrorResult(scrobbler, result);
+					});
 			})
 		);
 	}
