@@ -69,7 +69,7 @@ export class Extension {
 						const { label } = ctrl.getConnector();
 
 						showNowPlaying(song, label, () => {
-							openTab(ctrl.tabId);
+							openTab(ctrl.getTabId());
 						});
 						break;
 					}
@@ -77,7 +77,7 @@ export class Extension {
 					case ControllerEvent.SongUnrecognized: {
 						const song = ctrl.getCurrentSong();
 						await showSongNotRecognized(song, () => {
-							openTab(ctrl.tabId);
+							openTab(ctrl.getTabId());
 						});
 						break;
 					}

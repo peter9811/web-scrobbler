@@ -34,7 +34,7 @@ export abstract class TabWorker {
 	private activeTabId: number = browser.tabs.TAB_ID_NONE;
 	private currentTabId: number = browser.tabs.TAB_ID_NONE;
 
-	private tabControllers: Record<number, Controller> = {};
+	private tabControllers: Map<number, Controller>;
 	private browserAction: BrowserAction;
 
 	constructor() {
@@ -65,8 +65,8 @@ export abstract class TabWorker {
 	 */
 	async processCommand(command: string): Promise<void> {
 		const ctrl =
-			this.tabControllers[this.activeTabId] ||
-			this.tabControllers[this.currentTabId];
+			this.tabControllers.get(this.activeTabId) ||
+			this.tabControllers.get(this.currentTabId);
 		if (!ctrl) {
 			return;
 		}
@@ -106,7 +106,7 @@ export abstract class TabWorker {
 		type: MessageType,
 		data: unknown
 	): Promise<unknown> {
-		const ctrl = this.tabControllers[tabId];
+		const ctrl = this.tabControllers.get(tabId);
 
 		if (!ctrl) {
 			console.warn(
@@ -154,9 +154,9 @@ export abstract class TabWorker {
 	processPortMessage(tabId: number, type: MessageType, data: unknown): void {
 		switch (type) {
 			case Event.StateChanged: {
-				const ctrl = this.tabControllers[tabId];
+				const ctrl = this.tabControllers.get(tabId);
 				if (ctrl) {
-					ctrl.onStateChanged(data as ParsedSongInfo);
+					ctrl.processStateChange(data as ParsedSongInfo);
 				}
 				break;
 			}
@@ -211,6 +211,7 @@ export abstract class TabWorker {
 			this.currentTabId = currentTab.id;
 		}
 
+		this.tabControllers = new Map<number, Controller>();
 		this.browserAction = new BrowserAction();
 		/*
 		 * Prevent restoring the browser action icon
@@ -225,7 +226,7 @@ export abstract class TabWorker {
 	 * @param tabId Tab ID
 	 */
 	private updateBrowserAction(tabId: number): void {
-		const ctrl = this.tabControllers[tabId];
+		const ctrl = this.tabControllers.get(tabId);
 		if (ctrl) {
 			this.browserAction.update(ctrl);
 		} else {
@@ -242,14 +243,14 @@ export abstract class TabWorker {
 	 * @return Check result
 	 */
 	private shouldUpdateBrowserAction(tabId: number): boolean {
-		const activeCtrl = this.tabControllers[this.activeTabId];
-		if (activeCtrl && isActiveMode(activeCtrl.mode)) {
+		const activeCtrl = this.tabControllers.get(this.activeTabId);
+		if (activeCtrl && isActiveMode(activeCtrl.getMode())) {
 			return false;
 		}
 
-		const ctrl = this.tabControllers[tabId];
+		const ctrl = this.tabControllers.get(tabId);
 		if (ctrl) {
-			if (tabId !== this.currentTabId && isInactiveMode(ctrl.mode)) {
+			if (tabId !== this.currentTabId && isInactiveMode(ctrl.getMode())) {
 				return false;
 			}
 		}
@@ -263,17 +264,16 @@ export abstract class TabWorker {
 	 * @return Tab ID
 	 */
 	private findActiveTabId(): number {
-		const ctrl = this.tabControllers[this.currentTabId];
-		if (ctrl && isActiveMode(ctrl.mode)) {
+		const ctrl = this.tabControllers.get(this.currentTabId);
+		if (ctrl && isActiveMode(ctrl.getMode())) {
 			return this.currentTabId;
 		}
 
-		for (const tabId in this.tabControllers) {
-			const ctrl = this.tabControllers[tabId];
+		for (const tabId of this.tabControllers.keys()) {
+			const ctrl = this.tabControllers.get(tabId);
 			const mode = ctrl.getMode();
 			if (isActiveMode(mode)) {
-				// NOTE: Don't use `tabId` directly, it's a string.
-				return ctrl.tabId;
+				return tabId;
 			}
 		}
 
@@ -310,7 +310,7 @@ export abstract class TabWorker {
 	private updateContextMenu(tabId: number): void {
 		this.resetContextMenu();
 
-		const ctrl = this.tabControllers[tabId];
+		const ctrl = this.tabControllers.get(tabId);
 
 		// Always display context menu for current tab
 		if (ctrl) {
@@ -322,7 +322,7 @@ export abstract class TabWorker {
 
 		// Add additional menu items for active tab (if it's not current)...
 		if (this.activeTabId !== tabId) {
-			const activeCtrl = this.tabControllers[this.activeTabId];
+			const activeCtrl = this.tabControllers.get(this.activeTabId);
 
 			if (activeCtrl) {
 				if (
@@ -353,11 +353,11 @@ export abstract class TabWorker {
 	 */
 	private addToggleConnectorMenu(tabId: number, ctrl: Controller): void {
 		const { label } = ctrl.getConnector();
-		const titleId = ctrl.isEnabled
+		const titleId = ctrl.isEnabled()
 			? 'menuDisableConnector'
 			: 'menuEnableConnector';
 		const itemTitle = L(titleId, label);
-		const newState = !ctrl.isEnabled;
+		const newState = !ctrl.isEnabled();
 
 		this.addContextMenuItem(tabId, itemTitle, () => {
 			this.setConnectorState(ctrl, newState);
@@ -517,7 +517,7 @@ export abstract class TabWorker {
 			this.onControllerEvent(ctrl, event);
 		};
 
-		this.tabControllers[tabId] = ctrl;
+		this.tabControllers.set(tabId, ctrl);
 	}
 
 	/**
@@ -526,13 +526,13 @@ export abstract class TabWorker {
 	 * @param tabId Tab ID
 	 */
 	private unloadController(tabId: number): void {
-		const controller = this.tabControllers[tabId];
+		const controller = this.tabControllers.get(tabId);
 		if (!controller) {
 			return;
 		}
 
 		controller.finish();
-		delete this.tabControllers[tabId];
+		this.tabControllers.delete(tabId);
 	}
 
 	/**

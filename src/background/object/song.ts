@@ -76,6 +76,8 @@ export interface SongFlags {
 	 * Flag means song is replaying again.
 	 */
 	isReplaying: boolean;
+
+	isReadyToScrobble: boolean;
 }
 
 export interface ClonedSong {
@@ -400,6 +402,7 @@ export class Song {
 		this.flags = {
 			isCorrectedByUser: false,
 			isMarkedAsPlaying: false,
+			isReadyToScrobble: false,
 			isReplaying: false,
 			isScrobbled: false,
 			isSkipped: false,
