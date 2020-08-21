@@ -162,8 +162,8 @@ export class Controller {
 
 		this.currentSong.flags.isSkipped = true;
 
-		this.playbackTimer.reset();
-		this.replayDetectionTimer.reset();
+		// this.playbackTimer.reset();
+		// this.replayDetectionTimer.reset();
 
 		this.onSongUpdated();
 	}
@@ -318,11 +318,6 @@ export class Controller {
 
 		this.debugLog(`New song detected: ${toString(state)}`);
 
-		// if (!this.shouldScrobblePodcasts && state.isPodcast) {
-		// 	this.skipCurrentSong();
-		// 	return;
-		// }
-
 		/*
 		 * Start the timer, actual time will be set after processing
 		 * is done; we can call doScrobble directly, because the timer
@@ -333,8 +328,7 @@ export class Controller {
 		});
 
 		this.replayDetectionTimer.start(() => {
-			this.debugLog('Replaying song...');
-			this.isReplayingSong = true;
+			this.onReplayTimerExpired();
 		});
 		this.isReplayingSong = false;
 
@@ -406,6 +400,14 @@ export class Controller {
 			this.currentSong.flags.isMarkedAsPlaying = false;
 
 			this.updateTimers(this.currentSong.getDuration());
+
+			if (
+				!this.shouldScrobblePodcasts &&
+				this.currentSong.parsed.isPodcast
+			) {
+				this.skipCurrentSong();
+				return;
+			}
 
 			/*
 			 * If the song is playing, mark it immediately;
@@ -594,6 +596,12 @@ export class Controller {
 		}
 
 		this.scrobbleSong();
+	}
+
+	private onReplayTimerExpired(): void {
+		this.debugLog('Replaying song...');
+
+		this.isReplayingSong = true;
 	}
 
 	/**
