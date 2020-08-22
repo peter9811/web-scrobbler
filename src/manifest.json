@@ -16,8 +16,7 @@
     "connectors/deezer-dom-inject.js",
     "connectors/musickit-dom-inject.js",
     "connectors/vk-dom-inject.js",
-    "connectors/yandex-music-dom-inject.js",
-    "*.md"
+    "connectors/yandex-music-dom-inject.js"
   ],
 
   "background": {
