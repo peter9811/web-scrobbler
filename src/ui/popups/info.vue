@@ -416,6 +416,8 @@ export default {
 :root {
 	--cover-art-size: 136px;
 	--info-width: 224px;
+
+	--color-accent: #b8422c;
 }
 
 /**
@@ -540,15 +542,15 @@ input {
 }
 
 .control-btn--love:hover {
-	color: #d51007;
+	color: var(--color-accent);
 }
 
 .control-btn--skip:hover {
-	color: #d51007;
+	color: var(--color-accent);
 }
 
 .control-btn--unlove {
-	color: #d51007;
+	color: var(--color-accent);
 }
 
 .control-btn--unlove:hover {
@@ -556,7 +558,7 @@ input {
 }
 
 .control-btn--unskip {
-	color: #d51007;
+	color: var(--color-accent);
 }
 
 .control-btn--unskip:hover {
@@ -564,7 +566,7 @@ input {
 }
 
 .control-btn--submit:hover {
-	color: #65a858;
+	color: #519267;
 }
 
 /**
